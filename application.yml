@@ -6,3 +6,51 @@ eureka:
     register-with-eureka: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+      
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,info,shutdown
+
+  endpoint:
+    health:
+      show-details: always
+
+    shutdown:
+      enabled: true
+
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      USER-RATING-HOTEL-CIRCUIT:  # Unique name for the circuit breaker instance
+        registerHealthIndicator: true  # Register a health indicator for monitoring
+        eventConsumerBufferSize: 10  # Size of the buffer for event processing
+        failureRateThreshold: 50  # Threshold percentage for failure rate
+        minimumNumberOfCalls: 5  # Minimum number of calls before considering failure rate, if 5 failed calls continuously then go to open state
+        automaticTransitionFromOpenToHalfOpenEnabled: true  # Auto transition to half-open state
+        waitDurationInOpenState: 6s  # Duration to wait in open state before transitioning to half-open
+        permittedNumberOfCallsInHalfOpenState: 3  # Number of calls allowed in half-open state, must be made to go from half-open to closed
+        slidingWindowSize: 10  # Size of the sliding window for collecting metrics
+        slidingWindowType: COUNT_BASED  # Type of sliding window based on call count
+#Tuning Parameters: Adjust parameters like failureRateThreshold,
+# waitDurationInOpenState, and permittedNumberOfCallsInHalfOpenState
+# based on the characteristics and dependencies of your application.
+
+  retry:
+    instances:
+      USER-RATING-HOTEL-RETRY:
+        max-attempts: 3
+        wait-duration: 500ms
+
+  ratelimiter:
+    instances:
+      MICROSERVICE-RATELIMITER:
+        limit-refresh-period: 500ms  # Refresh period for the rate limiter in milliseconds
+        limit-for-period: 100          # Maximum number of calls permitted within the refresh period
+        timeout-duration: 1s         # Timeout duration for waiting for permission
